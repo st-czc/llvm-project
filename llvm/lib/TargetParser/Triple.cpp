@@ -93,6 +93,8 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
     return "mipsel";
   case msp430:
     return "msp430";
+  case spvcpu:
+    return "spvcpu";
   case nvptx64:
     return "nvptx64";
   case nvptx:
@@ -371,6 +373,9 @@ StringRef Triple::getArchTypePrefix(ArchType Kind) {
 
   case xtensa:
     return "xtensa";
+
+  case spvcpu:
+    return "spvcpu";
   }
 }
 
@@ -523,6 +528,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
       .Case("loongarch64", loongarch64)
       .Case("dxil", dxil)
       .Case("xtensa", xtensa)
+      .Case("spvcpu", spvcpu)
       .Default(UnknownArch);
 }
 
@@ -677,6 +683,7 @@ Triple::ArchType Triple::parseArch(StringRef ArchName) {
                   "dxilv1.9"},
                  Triple::dxil)
           .Case("xtensa", Triple::xtensa)
+          .Case("spvcpu", Triple::spvcpu)
           .Default(Triple::UnknownArch);
 
   // Some architectures require special parsing logic just to compute the
@@ -1034,6 +1041,9 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
 
   case Triple::dxil:
     return Triple::DXContainer;
+
+  case Triple::spvcpu:
+    return Triple::UnknownObjectFormat;
   }
   llvm_unreachable("unknown architecture");
 }
@@ -1728,6 +1738,7 @@ void Triple::setOSAndEnvironmentName(StringRef Str) {
 unsigned Triple::getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   switch (Arch) {
   case llvm::Triple::UnknownArch:
+  case llvm::Triple::spvcpu:
     return 0;
 
   case llvm::Triple::avr:
@@ -1840,6 +1851,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::bpfeb:
   case Triple::bpfel:
   case Triple::msp430:
+  case Triple::spvcpu:
   case Triple::systemz:
   case Triple::ve:
     T.setArch(UnknownArch);
@@ -1958,6 +1970,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::lanai:
   case Triple::m68k:
   case Triple::msp430:
+  case Triple::spvcpu:
   case Triple::r600:
   case Triple::shave:
   case Triple::sparcel:
@@ -2104,6 +2117,7 @@ Triple Triple::getBigEndianArchVariant() const {
   case Triple::ve:
   case Triple::csky:
   case Triple::xtensa:
+  case Triple::spvcpu:
 
   // ARM is intentionally unsupported here, changing the architecture would
   // drop any arch suffixes.
@@ -2224,6 +2238,7 @@ bool Triple::isLittleEndian() const {
   case Triple::mips64el:
   case Triple::mipsel:
   case Triple::msp430:
+  case Triple::spvcpu:
   case Triple::nvptx64:
   case Triple::nvptx:
   case Triple::ppcle:

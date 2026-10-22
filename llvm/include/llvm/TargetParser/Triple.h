@@ -114,6 +114,7 @@ public:
     wasm64,         // WebAssembly with 64-bit pointers
     renderscript32, // 32-bit RenderScript
     renderscript64, // 64-bit RenderScript
+    spvcpu,         // SPIR-V-model CPU
     ve,             // NEC SX-Aurora Vector Engine
     LastArchType = ve
   };
@@ -322,6 +323,7 @@ public:
     CUDA,   // NVIDIA CUDA
     NVCL,   // NVIDIA OpenCL
     AMDHSA, // AMD HSA Runtime
+    HIPCPU, // HIP CPU Runtime
     PS4,
     PS5,
     ELFIAMCU,
@@ -828,6 +830,9 @@ public:
   /// Tests whether the OS is Linux.
   bool isOSLinux() const { return getOS() == Triple::Linux; }
 
+  /// Tests whether the OS is the HIP CPU runtime.
+  bool isOSHIPCPU() const { return getOS() == Triple::HIPCPU; }
+
   /// Tests whether the OS is kFreeBSD.
   bool isOSKFreeBSD() const { return getOS() == Triple::KFreeBSD; }
 
@@ -1213,6 +1218,9 @@ public:
 
   // Tests whether the target is CSKY
   bool isCSKY() const { return getArch() == Triple::csky; }
+
+  /// Tests whether the target is SPIR-V-model CPU.
+  bool isSPVCPU() const { return getArch() == Triple::spvcpu; }
 
   /// Tests whether the target is the Apple "arm64e" AArch64 subarch.
   bool isArm64e() const {
