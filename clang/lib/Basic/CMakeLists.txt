@@ -122,6 +122,7 @@ add_clang_library(clangBasic
   Targets/X86.cpp
   Targets/XCore.cpp
   Targets/Xtensa.cpp
+  Targets/SPVCPU.cpp
   TokenKinds.cpp
   Version.cpp
   Warnings.cpp
