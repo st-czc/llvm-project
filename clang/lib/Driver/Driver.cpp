@@ -23,6 +23,7 @@
 #include "ToolChains/Fuchsia.h"
 #include "ToolChains/Gnu.h"
 #include "ToolChains/HIPAMD.h"
+#include "ToolChains/HIPCPU.h"
 #include "ToolChains/HIPSPV.h"
 #include "ToolChains/HLSL.h"
 #include "ToolChains/Haiku.h"
@@ -1025,7 +1026,8 @@ static TripleSet inferOffloadToolchains(Compilation &C,
         C.getArgs().hasFlag(options::OPT_foffload_via_llvm,
                             options::OPT_fno_offload_via_llvm, false);
     if (!UsesLLVMOffloading) {
-      if (Kind == Action::OFK_HIP && !ID.isAMDGPU() && !ID.isAMDGCNSPIRV()) {
+      if (Kind == Action::OFK_HIP && !ID.isAMDGPU() && !ID.isAMDGCNSPIRV() &&
+          !ID.isSPVCPU()) {
         C.getDriver().Diag(clang::diag::err_drv_offload_bad_gpu_arch)
             << "HIP" << Arch;
         return {};
@@ -6135,6 +6137,11 @@ const ToolChain &Driver::getOffloadToolChain(
       TC = std::make_unique<toolchains::AMDGPUToolChain>(*this, Target, Args,
                                                          HostTC.get(), Kind);
       break;
+    case llvm::Triple::spvcpu:
+      if (Kind == Action::OFK_HIP)
+        TC = std::make_unique<toolchains::HIPCPUToolChain>(*this, Target,
+                                                           *HostTC, Args);
+      break;
     case llvm::Triple::spir:
     case llvm::Triple::spir64:
     case llvm::Triple::spirv:
@@ -6380,6 +6387,9 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       case llvm::Triple::amdgpu:
       case llvm::Triple::r600:
         TC = std::make_unique<toolchains::AMDGPUToolChain>(*this, Target, Args);
+        break;
+      case llvm::Triple::spvcpu:
+        TC = std::make_unique<toolchains::HIPCPUToolChain>(*this, Target, Args);
         break;
       default:
         if (toolchains::BareMetal::handlesTarget(Target))

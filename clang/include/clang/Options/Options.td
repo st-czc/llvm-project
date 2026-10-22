@@ -1547,6 +1547,10 @@ defm hip_kernel_arg_name : BoolFOption<"hip-kernel-arg-name",
 def hipspv_pass_plugin_EQ : Joined<["--"], "hipspv-pass-plugin=">,
   Group<Link_Group>, MetaVarName<"<dsopath>">,
   HelpText<"path to a pass plugin for HIP to SPIR-V passes.">;
+def hip_cpu_host_triple_EQ
+    : Joined<["--"], "hip-cpu-host-triple=">, Flags<[HelpHidden]>,
+      Visibility<[ClangOption]>, MetaVarName<"<triple>">,
+      HelpText<"Host triple used to compile spvcpu device code.">;
 defm gpu_allow_device_init : BoolFOption<"gpu-allow-device-init",
   LangOpts<"GPUAllowDeviceInit">, DefaultFalse,
   PosFlag<SetTrue, [], [ClangOption, CC1Option], "Allow">,

@@ -70,6 +70,7 @@ add_clang_library(clangDriver
   ToolChains/Haiku.cpp
   ToolChains/HIPUtility.cpp
   ToolChains/HIPAMD.cpp
+  ToolChains/HIPCPU.cpp
   ToolChains/HIPSPV.cpp
   ToolChains/Hexagon.cpp
   ToolChains/HLSL.cpp
