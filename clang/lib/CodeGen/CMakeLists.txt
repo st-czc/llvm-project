@@ -158,6 +158,7 @@ add_clang_library(clangCodeGen
   Targets/TCE.cpp
   Targets/VE.cpp
   Targets/WebAssembly.cpp
+  Targets/SPVCPU.cpp
   Targets/X86.cpp
   Targets/XCore.cpp
   TrapReasonBuilder.cpp

@@ -597,6 +597,10 @@ std::unique_ptr<TargetCodeGenInfo>
 createSPIRVTargetCodeGenInfo(CodeGenModule &CGM);
 
 std::unique_ptr<TargetCodeGenInfo>
+createSPVCPUTargetCodeGenInfo(CodeGenModule &CGM,
+                              std::unique_ptr<TargetCodeGenInfo>);
+
+std::unique_ptr<TargetCodeGenInfo>
 createSparcV8TargetCodeGenInfo(CodeGenModule &CGM);
 
 std::unique_ptr<TargetCodeGenInfo>

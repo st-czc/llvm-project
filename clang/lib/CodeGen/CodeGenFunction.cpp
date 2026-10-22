@@ -632,6 +632,12 @@ void CodeGenFunction::EmitKernelMetadata(const FunctionDecl *FD,
 
   CGM.GenKernelArgMetadata(Fn, FD, this);
 
+  // Mark HIP kernels for the NativeCPU lowering passes, which keep the
+  // functions carrying this attribute as exported entry points.
+  if (getLangOpts().CUDAIsDevice &&
+      getContext().getTargetInfo().getTriple().isSPVCPU())
+    Fn->addFnAttr("sycl-module-id", Fn->getParent()->getModuleIdentifier());
+
   if (!(getLangOpts().OpenCL ||
         (getLangOpts().CUDA &&
          getContext().getTargetInfo().getTriple().isSPIRV())))

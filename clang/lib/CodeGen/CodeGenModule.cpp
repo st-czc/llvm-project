@@ -117,9 +117,19 @@ static CGCXXABI *createCXXABI(CodeGenModule &CGM) {
 }
 
 static std::unique_ptr<TargetCodeGenInfo>
+createTargetCodeGenInfo(CodeGenModule &CGM, const TargetInfo &Target,
+                        const llvm::Triple &Triple);
+
+static std::unique_ptr<TargetCodeGenInfo>
 createTargetCodeGenInfo(CodeGenModule &CGM) {
   const TargetInfo &Target = CGM.getTarget();
   const llvm::Triple &Triple = Target.getTriple();
+  return createTargetCodeGenInfo(CGM, Target, Triple);
+}
+
+static std::unique_ptr<TargetCodeGenInfo>
+createTargetCodeGenInfo(CodeGenModule &CGM, const TargetInfo &Target,
+                        const llvm::Triple &Triple) {
   const CodeGenOptions &CodeGenOpts = CGM.getCodeGenOpts();
 
   switch (Triple.getArch()) {
@@ -336,6 +346,27 @@ createTargetCodeGenInfo(CodeGenModule &CGM) {
       ABIFRLen = 64;
     return createLoongArchTargetCodeGenInfo(
         CGM, Target.getPointerWidth(LangAS::Default), ABIFRLen);
+  }
+
+  case llvm::Triple::spvcpu: {
+    std::unique_ptr<TargetCodeGenInfo> HostTargetCodeGenInfo;
+    const auto &TargetOpts = Target.getTargetOpts();
+
+    llvm::Triple HostTriple(TargetOpts.Triple);
+    if (HostTriple.isSPVCPU()) {
+      HostTriple = [&] {
+        if (TargetOpts.HostTriple.empty())
+          return llvm::Triple(llvm::sys::getDefaultTargetTriple());
+
+        return llvm::Triple(TargetOpts.HostTriple);
+      }();
+    }
+    if (!HostTriple.isSPVCPU()) {
+      HostTargetCodeGenInfo = createTargetCodeGenInfo(CGM, Target, HostTriple);
+    }
+
+    return createSPVCPUTargetCodeGenInfo(CGM,
+                                         std::move(HostTargetCodeGenInfo));
   }
   }
 }
