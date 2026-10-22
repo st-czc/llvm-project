@@ -39,6 +39,7 @@ public:
     AMDGCNSPIRV, // The 'amdgcnspirv' pseudo target.
     IntelCPU,    // Kind is an IntelArch.
     IntelGPU,    // Kind is an IntelArch.
+    SPVCPU,      // The 'spvcpu' pseudo target.
     Generic,     // The 'generic' processor model.
   };
 
@@ -72,6 +73,9 @@ public:
   static constexpr OffloadArch getAMDGCNSPIRV() {
     return {TargetArch::AMDGCNSPIRV, 0};
   }
+  static constexpr OffloadArch getSPVCPU() {
+    return {TargetArch::SPVCPU, 0};
+  }
   static constexpr OffloadArch getGeneric() { return {TargetArch::Generic, 0}; }
 
   /// Default architectures used when the user does not specify one.
@@ -86,6 +90,7 @@ public:
   bool isIntelCPU() const { return V == TargetArch::IntelCPU; }
   bool isIntelGPU() const { return V == TargetArch::IntelGPU; }
   bool isIntel() const { return isIntelCPU() || isIntelGPU(); }
+  bool isSPVCPU() const { return V == TargetArch::SPVCPU; }
   bool isGeneric() const { return V == TargetArch::Generic; }
   bool isUnused() const { return V == TargetArch::Unused; }
   bool isUnknown() const { return V == TargetArch::Unknown; }

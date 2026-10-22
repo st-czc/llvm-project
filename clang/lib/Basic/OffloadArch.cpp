@@ -39,6 +39,8 @@ const char *OffloadArchToString(OffloadArch A) {
     return "graniterapids";
   case OffloadArch::TargetArch::IntelGPU:
     return "bmg_g21";
+  case OffloadArch::TargetArch::SPVCPU:
+    return "spvcpu";
   case OffloadArch::TargetArch::Generic:
     return "generic";
   }
@@ -57,6 +59,7 @@ const char *OffloadArchToVirtualArchString(OffloadArch A) {
   case OffloadArch::TargetArch::Unused:
   case OffloadArch::TargetArch::IntelCPU:
   case OffloadArch::TargetArch::IntelGPU:
+  case OffloadArch::TargetArch::SPVCPU:
   case OffloadArch::TargetArch::Generic:
     return "";
   }
@@ -71,6 +74,8 @@ OffloadArch StringToOffloadArch(llvm::StringRef S) {
   // Non-GPU-table pseudo/sentinel architectures.
   if (S == "amdgcnspirv")
     return OffloadArch::getAMDGCNSPIRV();
+  if (S == "spvcpu")
+    return OffloadArch::getSPVCPU();
   if (S == "generic")
     return OffloadArch::getGeneric();
   if (S == "graniterapids")
@@ -125,6 +130,10 @@ llvm::Triple OffloadArchToTriple(const llvm::Triple &DefaultToolchainTriple,
   if (ID.isAMDGPU())
     return llvm::Triple(llvm::Triple::amdgpu, llvm::Triple::NoSubArch,
                         llvm::Triple::AMD, llvm::Triple::AMDHSA);
+
+  if (ID.isSPVCPU())
+    return llvm::Triple(llvm::Triple::spvcpu, llvm::Triple::NoSubArch,
+                        llvm::Triple::UnknownVendor, llvm::Triple::HIPCPU);
 
   return {};
 }
