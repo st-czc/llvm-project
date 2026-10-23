@@ -25,6 +25,7 @@ set(LIBCXX_SEARCH_PATHS
   "${CMAKE_SOURCE_DIR}/libcxx/include"
   "${CMAKE_SOURCE_DIR}/../libcxx/include"
   "${CMAKE_SOURCE_DIR}/../../libcxx/include"  # amd/comgr -> libcxx
+  "${CMAKE_SOURCE_DIR}/../../../llvm-project/libcxx/include"  # amd/comgr -> compiler/llvm-project
 )
 
 set(LIBCXX_INCLUDE_DIR "")

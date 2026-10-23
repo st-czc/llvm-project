@@ -26,6 +26,36 @@ using namespace llvm;
 
 namespace COMGR::hotswap {
 namespace {
+// LLVM's get*ImplicitArgPosition() helpers are not annotated LLVM_ABI, so they
+// are local symbols in libLLVM.so and cannot be resolved when Comgr links the
+// dylib. The bodies are trivial (hard-coded COV4 offsets plus the COV5 vector
+// from SIDefines.h), so mirror them here instead of relying on the export.
+namespace LOCALI {
+unsigned getImplicitArgPosition(unsigned COV, unsigned COV4Position,
+                                unsigned COV5Position) {
+  return COV == AMDGPU::AMDHSA_COV4 ? COV4Position : COV5Position;
+}
+
+unsigned getHostcallImplicitArgPosition(unsigned COV) {
+  return getImplicitArgPosition(COV, 24,
+                                AMDGPU::ImplicitArg::HOSTCALL_PTR_OFFSET);
+}
+
+unsigned getDefaultQueueImplicitArgPosition(unsigned COV) {
+  return getImplicitArgPosition(COV, 32,
+                                AMDGPU::ImplicitArg::DEFAULT_QUEUE_OFFSET);
+}
+
+unsigned getCompletionActionImplicitArgPosition(unsigned COV) {
+  return getImplicitArgPosition(COV, 40,
+                                AMDGPU::ImplicitArg::COMPLETION_ACTION_OFFSET);
+}
+
+unsigned getMultigridSyncArgImplicitArgPosition(unsigned COV) {
+  return getImplicitArgPosition(COV, 48,
+                                AMDGPU::ImplicitArg::MULTIGRID_SYNC_ARG_OFFSET);
+} 
+} // namespace LOCALI
 
 // Offsets in the HSA AQL `hsa_kernel_dispatch_packet_t` as defined by the
 // public HSA runtime header.  Do not use SI::KernelInputOffsets here: those are
@@ -283,24 +313,24 @@ Expected<Value *> emitHiddenArgValue(SourceHiddenArgContext &Ctx,
   case SourceHiddenArgKind::HiddenDefaultQueue:
     return loadTargetHiddenPointer(
         Ctx,
-        AMDGPU::getDefaultQueueImplicitArgPosition(Ctx.TargetCodeObjectVersion),
+        LOCALI::getDefaultQueueImplicitArgPosition(Ctx.TargetCodeObjectVersion),
         "amdgpu-no-default-queue", "source_hidden_default_queue");
   case SourceHiddenArgKind::HiddenCompletionAction:
     return loadTargetHiddenPointer(
         Ctx,
-        AMDGPU::getCompletionActionImplicitArgPosition(
+        LOCALI::getCompletionActionImplicitArgPosition(
             Ctx.TargetCodeObjectVersion),
         "amdgpu-no-completion-action", "source_hidden_completion_action");
   case SourceHiddenArgKind::HiddenMultigridSyncArg:
     return loadTargetHiddenPointer(
         Ctx,
-        AMDGPU::getMultigridSyncArgImplicitArgPosition(
+        LOCALI::getMultigridSyncArgImplicitArgPosition(
             Ctx.TargetCodeObjectVersion),
         "amdgpu-no-multigrid-sync-arg", "source_hidden_multigrid_sync_arg");
   case SourceHiddenArgKind::HiddenHostcallBuffer:
     return loadTargetHiddenPointer(
         Ctx,
-        AMDGPU::getHostcallImplicitArgPosition(Ctx.TargetCodeObjectVersion),
+        LOCALI::getHostcallImplicitArgPosition(Ctx.TargetCodeObjectVersion),
         "amdgpu-no-hostcall-ptr", "source_hidden_hostcall_buffer");
   case SourceHiddenArgKind::HiddenHeapV1:
     if (Ctx.TargetCodeObjectVersion < AMDGPU::AMDHSA_COV5)
