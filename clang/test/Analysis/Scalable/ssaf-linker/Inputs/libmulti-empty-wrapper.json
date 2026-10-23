@@ -1,8 +1,0 @@
-{
-  "members": [],
-  "namespace": {
-    "kind": "MultiArchStaticLibrary",
-    "name": "libmulti"
-  },
-  "type": "MultiArchStaticLibrary"
-}

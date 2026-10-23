@@ -1,3 +1,0 @@
-module std_config_site {
-  textual header "__config_site"
-}
