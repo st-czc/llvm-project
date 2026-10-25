@@ -6879,6 +6879,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     if (IntrinsicID == Intrinsic::not_intrinsic && Prefix == "spv" &&
         getTarget().getTriple().getOS() == llvm::Triple::OSType::AMDHSA)
       IntrinsicID = Intrinsic::getIntrinsicForClangBuiltin("amdgcn", Name);
+    // HIPCPU borrows AMDGPU's builtins; resolve them via the "amdgcn" prefix.
+    if (IntrinsicID == Intrinsic::not_intrinsic && Prefix == "spvcpu" &&
+        getTarget().getTriple().getOS() == llvm::Triple::OSType::HIPCPU)
+      IntrinsicID = Intrinsic::getIntrinsicForClangBuiltin("amdgcn", Name);
     // NOTE we don't need to perform a compatibility flag check here since the
     // intrinsics are declared in Builtins*.def via LANGBUILTIN which filter the
     // MS builtins via ALL_MS_LANGUAGES and are filtered earlier.
