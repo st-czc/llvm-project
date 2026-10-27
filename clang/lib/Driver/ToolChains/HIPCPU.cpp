@@ -91,7 +91,8 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
   InputInfo UtilsLinked(&JA, UtilsFile, Output.getBaseInput());
   {
     ArgStringList LinkArgs{"-o", UtilsFile, "-suppress-warnings", MergedFile,
-                           Args.MakeArgString(HIPTC.getUtilsLibPath())};
+                           Args.MakeArgString(HIPTC.getDeviceLibPath(
+                               "libsycl-nativecpu_utils.bc"))};
     C.addCommand(
         std::make_unique<Command>(JA, *this, ResponseFileSupport::None(),
                                   LLVMLink, LinkArgs, Merged, UtilsLinked));
@@ -104,7 +105,8 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
     ArgStringList OptArgs{UtilsFile,
                           Args.MakeArgString("-mtriple=" + HostTriple),
                           "-load-pass-plugin",
-                          Args.MakeArgString(HIPTC.getPassesPluginPath()),
+                          Args.MakeArgString(HIPTC.getPassesPluginPath(
+                              "LLVMHIPOnSYCLNativeCPUPasses.so")),
                           "-passes=default<O2>,sycl-native-cpu",
                           "-o",
                           LoweredFile};
@@ -118,17 +120,20 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
   Args.ClaimAllArgs(options::OPT_shared);
 
   // Generate host machine code and link the shared library.
-  ArgStringList ClangArgs{"-target",
-                          Args.MakeArgString(HostTriple),
-                          "-O2",
-                          "-fPIC",
-                          "-shared",
-                          "-Wl,-Bsymbolic",
-                          "-x",
-                          "ir",
-                          LoweredFile,
-                          "-o",
-                          Output.getFilename()};
+  ArgStringList ClangArgs{
+      "-target",
+      Args.MakeArgString(HostTriple),
+      "-O2",
+      "-fPIC",
+      "-shared",
+      "-Wl,-Bsymbolic",
+      Args.MakeArgString("-fpass-plugin=" +
+                         HIPTC.getPassesPluginPath("LLVMHIPCPUFixups.so")),
+      "-x",
+      "ir",
+      LoweredFile,
+      "-o",
+      Output.getFilename()};
   C.addCommand(std::make_unique<Command>(JA, *this, ResponseFileSupport::None(),
                                          D.getDriverProgramPath(), ClangArgs,
                                          Lowered, Output, D.getPrependArg()));
@@ -150,23 +155,21 @@ HIPCPUToolChain::HIPCPUToolChain(const Driver &D, const llvm::Triple &Triple,
 
 Tool *HIPCPUToolChain::buildLinker() const { return new HIPCPU::Linker(*this); }
 
-std::string HIPCPUToolChain::getPassesPluginPath() const {
+std::string HIPCPUToolChain::getPassesPluginPath(StringRef Name) const {
   llvm::SmallString<256> Path = llvm::sys::path::parent_path(getDriver().Dir);
-  llvm::sys::path::append(Path, "lib", "LLVMHIPOnSYCLNativeCPUPasses.so");
+  llvm::sys::path::append(Path, "lib", Name);
   return Path.str().str();
 }
 
-std::string HIPCPUToolChain::getUtilsLibPath() const {
+std::string HIPCPUToolChain::getDeviceLibPath(StringRef Name) const {
   llvm::SmallString<256> Path(getDriver().Dir);
-  llvm::sys::path::append(Path, "..", "spvcpu", "bitcode",
-                          "libsycl-nativecpu_utils.bc");
+  llvm::sys::path::append(Path, "..", "spvcpu", "bitcode", Name);
   if (llvm::sys::fs::exists(Path))
     return Path.str().str();
 
   Path = getDriver().Dir;
   llvm::sys::path::append(Path, "..", "..", "..");
-  llvm::sys::path::append(Path, "spvcpu", "bitcode",
-                          "libsycl-nativecpu_utils.bc");
+  llvm::sys::path::append(Path, "spvcpu", "bitcode", Name);
   return Path.str().str();
 }
 
@@ -183,6 +186,31 @@ void HIPCPUToolChain::addClangTargetOptions(
                          options::OPT_fvisibility_ms_compat))
     CC1Args.append(
         {"-fvisibility=hidden", "-fapply-global-visibility-to-externs"});
+
+  // The oclc flags are read by the code in ocml.bc, so they are linked into
+  // every device compilation, as for amdgcn.
+  const bool FastMath = DriverArgs.hasFlag(options::OPT_ffast_math,
+                                           options::OPT_fno_fast_math, false);
+  const bool FiniteOnly =
+      FastMath || DriverArgs.hasArg(options::OPT_cl_finite_math_only) ||
+      DriverArgs.hasFlag(options::OPT_ffinite_math_only,
+                         options::OPT_fno_finite_math_only, false);
+  const bool UnsafeMathOpt =
+      FastMath ||
+      DriverArgs.hasArg(options::OPT_cl_unsafe_math_optimizations) ||
+      DriverArgs.hasFlag(options::OPT_funsafe_math_optimizations,
+                         options::OPT_fno_unsafe_math_optimizations, false);
+
+  CC1Args.append({"-mlink-builtin-bitcode",
+                  DriverArgs.MakeArgString(getDeviceLibPath("ocml.bc"))});
+  CC1Args.append(
+      {"-mlink-builtin-bitcode", DriverArgs.MakeArgString(getDeviceLibPath(
+                                     FiniteOnly ? "oclc_finite_only_on.bc"
+                                                : "oclc_finite_only_off.bc"))});
+  CC1Args.append({"-mlink-builtin-bitcode",
+                  DriverArgs.MakeArgString(getDeviceLibPath(
+                      UnsafeMathOpt ? "oclc_unsafe_math_on.bc"
+                                    : "oclc_unsafe_math_off.bc"))});
 }
 
 void HIPCPUToolChain::addClangWarningOptions(ArgStringList &CC1Args) const {

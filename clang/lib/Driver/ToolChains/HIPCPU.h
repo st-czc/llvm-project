@@ -14,6 +14,7 @@
 #include "clang/Driver/RocmInstallationDetector.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/ToolChain.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace clang {
 namespace driver {
@@ -60,11 +61,11 @@ public:
     return HostTC ? &HostTC->getTriple() : nullptr;
   }
 
-  /// Returns the path to the pass plugin used to lower the device module.
-  std::string getPassesPluginPath() const;
+  /// Returns the path to the bitcode library built for spvcpu.
+  std::string getDeviceLibPath(llvm::StringRef Name) const;
 
-  /// Returns the path to the NativeCPU support bitcode library.
-  std::string getUtilsLibPath() const;
+  /// Returns the path to the pass plugin used to lower the device module.
+  std::string getPassesPluginPath(llvm::StringRef Name) const;
 
   void
   addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
@@ -84,6 +85,8 @@ public:
   /// Device compilation always stops at bitcode; code generation happens once
   /// the whole device module has been linked and lowered.
   LTOKind getDefaultLTOMode() const override { return LTOK_Full; }
+
+  bool IsMathErrnoDefault() const override { return false; }
 
   // The device image is a shared library.
   bool isPICDefault() const override { return true; }
