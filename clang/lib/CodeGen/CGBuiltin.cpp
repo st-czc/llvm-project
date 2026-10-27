@@ -133,6 +133,11 @@ static Value *EmitTargetArchBuiltinExpr(CodeGenFunction *CGF,
     [[fallthrough]];
   case llvm::Triple::spirv:
     return CGF->EmitSPIRVBuiltinExpr(BuiltinID, E);
+  case llvm::Triple::spvcpu:
+    // HIPCPU borrows AMDGPU's builtins, so dispatch them the same way.
+    if (CGF->getTarget().getTriple().isOSHIPCPU())
+      return CGF->EmitAMDGPUBuiltinExpr(BuiltinID, E);
+    return nullptr;
   case llvm::Triple::avr:
     return CGF->EmitAVRBuiltinExpr(BuiltinID, E);
   default:
