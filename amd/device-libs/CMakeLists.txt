@@ -28,6 +28,9 @@ add_custom_target(rocm-device-libs)
 option(USE_NEW_HOSTCALL_IMPL
   "Use the new phase/occupancy-based ockl hostcall implementation" OFF)
 
+option(ROCM_DEVICE_LIBS_BUILD_SPVCPU
+  "Build the device bitcode for the spvcpu HIP CPU target" OFF)
+
 # Optionally, build Device Libs with ccache.
 set(ROCM_CCACHE_BUILD OFF CACHE BOOL "Set to ON for a ccache enabled build")
 if (ROCM_CCACHE_BUILD)
@@ -93,6 +96,10 @@ add_subdirectory(ockl)
 add_subdirectory(opencl)
 add_subdirectory(hip)
 add_subdirectory(asanrtl)
+
+if (ROCM_DEVICE_LIBS_BUILD_SPVCPU)
+  add_subdirectory(spvcpu)
+endif()
 
 enable_testing()
 add_subdirectory(test/compile)
