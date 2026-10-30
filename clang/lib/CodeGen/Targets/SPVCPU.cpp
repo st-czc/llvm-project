@@ -26,6 +26,8 @@ public:
       : DefaultABIInfo(CGT), HostABIInfo(HostABIInfo) {}
 
   void computeInfo(CGFunctionInfo &FI) const override;
+
+  ABIArgInfo classifyKernelArgumentType(QualType Ty) const;
 };
 
 class SPVCPUTargetCodeGenInfo : public TargetCodeGenInfo {
@@ -47,8 +49,10 @@ public:
   void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &M) const override;
 
+  // AMDGPU_KERNEL sends kernels to SPVCPUABIInfo::computeInfo. The emitted
+  // function keeps the spir_kernel convention.
   unsigned getDeviceKernelCallingConv() const override {
-    return llvm::CallingConv::SPIR_KERNEL;
+    return llvm::CallingConv::AMDGPU_KERNEL;
   }
 
   void setCUDAKernelCallingConvention(const FunctionType *&FT) const override {
@@ -175,12 +179,30 @@ void SPVCPUTargetCodeGenInfo::setTargetAttributes(
     setFunctionDeclAttributes(FD, F, M);
 }
 
+ABIArgInfo SPVCPUABIInfo::classifyKernelArgumentType(QualType Ty) const {
+  // Aggregate arguments pass byref to their copy in the runtime buffer.
+  if (isAggregateTypeForABI(Ty))
+    return ABIArgInfo::getIndirectAliased(
+        getContext().getTypeAlignInChars(Ty),
+        getContext().getTargetAddressSpace(LangAS::opencl_constant),
+        /*Realign=*/false, /*Padding=*/nullptr);
+  return ABIArgInfo::getDirect(CGT.ConvertType(Ty), 0, nullptr,
+                               /*CanBeFlattened=*/false);
+}
+
 void SPVCPUABIInfo::computeInfo(CGFunctionInfo &FI) const {
-  // A function with CC_DeviceKernel never reaches this function.
-  // SPVCPU maps CC_DeviceKernel to SPIR_KERNEL. computeSPIRKernelABIInfo
-  // computes the ABI before this function runs. CommonSPIRABIInfo supplies
-  // the argument rules.
-  //
+  // HIP kernels reach this function: getDeviceKernelCallingConv() maps
+  // CC_DeviceKernel to AMDGPU_KERNEL, so computeSPIRKernelABIInfo is skipped.
+  // The emitted function keeps the spir_kernel convention.
+  if (FI.getCallingConvention() == llvm::CallingConv::AMDGPU_KERNEL) {
+    if (!getCXXABI().classifyReturnType(FI))
+      FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
+    for (auto &Arg : FI.arguments())
+      Arg.info = classifyKernelArgumentType(Arg.type);
+    FI.setEffectiveCallingConvention(llvm::CallingConv::SPIR_KERNEL);
+    return;
+  }
+
   // The default path below runs only when no host ABI exists.
   // If a compiler-internal function must use the default ABI even when a
   // host ABI exists, add a dedicated calling convention. intel/llvm does
