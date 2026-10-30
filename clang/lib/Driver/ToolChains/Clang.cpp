@@ -9890,11 +9890,16 @@ void LinkerWrapper::ConstructJob(Compilation &C, const JobAction &JA,
             "--device-linker=" + TC->getTripleString() + "=" + Arg));
 
       // spvcpu device code is compiled for the host CPU at link time.
-      if (Kind == Action::OFK_HIP && TC->getTriple().isSPVCPU())
+      if (Kind == Action::OFK_HIP && TC->getTriple().isSPVCPU()) {
         if (const llvm::Triple *HostTriple = TC->getAuxTriple())
           CmdArgs.push_back(Args.MakeArgString(
               "--device-compiler=" + TC->getTripleString() +
               "=--hip-cpu-host-triple=" + HostTriple->str()));
+        if (Arg *A = ToolChainArgs.getLastArg(OPT_hip_cpu_host_cpu_EQ))
+          CmdArgs.push_back(Args.MakeArgString(
+              "--device-compiler=" + TC->getTripleString() +
+              "=--hip-cpu-host-cpu=" + A->getValue()));
+      }
 
       // Forward the LTO mode for this toolchain.
       auto DeviceLTOMode = TC->getLTOMode(ToolChainArgs, Kind);

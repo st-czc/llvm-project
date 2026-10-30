@@ -1551,6 +1551,10 @@ def hip_cpu_host_triple_EQ
     : Joined<["--"], "hip-cpu-host-triple=">, Flags<[HelpHidden]>,
       Visibility<[ClangOption]>, MetaVarName<"<triple>">,
       HelpText<"Host triple used to compile spvcpu device code.">;
+def hip_cpu_host_cpu_EQ
+    : Joined<["--"], "hip-cpu-host-cpu=">, Flags<[HelpHidden]>,
+      Visibility<[ClangOption]>, MetaVarName<"<cpu>">,
+      HelpText<"Host CPU used to compile spvcpu device code.">;
 defm gpu_allow_device_init : BoolFOption<"gpu-allow-device-init",
   LangOpts<"GPUAllowDeviceInit">, DefaultFalse,
   PosFlag<SetTrue, [], [ClangOption, CC1Option], "Allow">,

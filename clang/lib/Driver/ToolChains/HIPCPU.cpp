@@ -14,6 +14,8 @@
 #include "clang/Driver/InputInfo.h"
 #include "clang/Options/Options.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/TargetParser/Host.h"
@@ -23,6 +25,28 @@ using namespace clang::driver::toolchains;
 using namespace clang::driver::tools;
 using namespace clang;
 using namespace llvm::opt;
+
+namespace {
+
+// Rejects a host CPU name that the host target does not know, so that the
+// error surfaces here rather than in opt or in the final code generation.
+bool isValidHostCPU(const Driver &D, const llvm::Triple &Triple,
+                    llvm::StringRef CPU) {
+  std::string Error;
+  const llvm::Target *Target =
+      llvm::TargetRegistry::lookupTarget(Triple, Error);
+  if (!Target)
+    return true;
+  std::unique_ptr<llvm::MCSubtargetInfo> STI(
+      Target->createMCSubtargetInfo(Triple, CPU, ""));
+  if (STI->isCPUStringValid(CPU))
+    return true;
+  D.Diag(clang::diag::err_drv_unsupported_option_argument)
+      << "hip-cpu-host-cpu" << CPU;
+  return false;
+}
+
+} // namespace
 
 void HIPCPU::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                   const InputInfo &Output,
@@ -72,6 +96,12 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
   if (HostTriple.empty())
     HostTriple = llvm::sys::getDefaultTargetTriple();
 
+  const Arg *HostCPUArg = Args.getLastArg(options::OPT_hip_cpu_host_cpu_EQ);
+  const std::string HostCPU =
+      HostCPUArg ? HostCPUArg->getValue() : llvm::sys::getHostCPUName().str();
+  if (HostCPUArg && !isValidHostCPU(D, llvm::Triple(HostTriple), HostCPU))
+    return;
+
   // Merge the bitcode of every translation unit.
   const char *MergedFile = HIP::getTempFile(C, Stem + "-merged", "bc");
   InputInfo Merged(&JA, MergedFile, Output.getBaseInput());
@@ -110,6 +140,8 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
                           "-passes=default<O2>,sycl-native-cpu",
                           "-o",
                           LoweredFile};
+    if (!HostCPU.empty())
+      OptArgs.push_back(Args.MakeArgString("-mcpu=" + HostCPU));
     C.addCommand(std::make_unique<Command>(JA, *this,
                                            ResponseFileSupport::None(), Opt,
                                            OptArgs, UtilsLinked, Lowered));
@@ -134,6 +166,14 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
       LoweredFile,
       "-o",
       Output.getFilename()};
+  if (!HostCPU.empty()) {
+    // x86 selects the CPU through -march=, every other target through -mcpu=.
+    const llvm::Triple HostTT(HostTriple);
+    if (HostTT.isX86())
+      ClangArgs.push_back(Args.MakeArgString("-march=" + HostCPU));
+    else
+      ClangArgs.push_back(Args.MakeArgString("-mcpu=" + HostCPU));
+  }
   C.addCommand(std::make_unique<Command>(JA, *this, ResponseFileSupport::None(),
                                          D.getDriverProgramPath(), ClangArgs,
                                          Lowered, Output, D.getPrependArg()));
