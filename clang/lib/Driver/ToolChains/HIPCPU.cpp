@@ -145,6 +145,15 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
         LoweredFile};
     if (!HostCPU.empty())
       OptArgs.push_back(Args.MakeArgString("-mcpu=" + HostCPU));
+    if (const Arg *A = Args.getLastArg(options::OPT_hipcpu_vecz_width_EQ))
+      OptArgs.push_back(
+          Args.MakeArgString(std::string("-cpu-vecz-width=") + A->getValue()));
+    if (Args.hasArg(options::OPT_hipcpu_vecz_scalable))
+      OptArgs.push_back("-cpu-vecz-scalable");
+    if (Args.hasArg(options::OPT_hipcpu_vecz_vector_predication))
+      OptArgs.push_back("-cpu-vecz-vector-predication");
+    if (Args.hasArg(options::OPT_hipcpu_vecz_linearize_boscc))
+      OptArgs.push_back("-cpu-vecz-linearize-boscc");
     C.addCommand(std::make_unique<Command>(JA, *this,
                                            ResponseFileSupport::None(), Opt,
                                            OptArgs, UtilsLinked, Lowered));

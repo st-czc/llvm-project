@@ -9899,6 +9899,26 @@ void LinkerWrapper::ConstructJob(Compilation &C, const JobAction &JA,
           CmdArgs.push_back(Args.MakeArgString(
               "--device-compiler=" + TC->getTripleString() +
               "=--hip-cpu-host-cpu=" + A->getValue()));
+        Args.ClaimAllArgs(options::OPT_hipcpu_vecz_width_EQ);
+        Args.ClaimAllArgs(options::OPT_hipcpu_vecz_scalable);
+        Args.ClaimAllArgs(options::OPT_hipcpu_vecz_vector_predication);
+        Args.ClaimAllArgs(options::OPT_hipcpu_vecz_linearize_boscc);
+        if (Arg *A = ToolChainArgs.getLastArg(OPT_hipcpu_vecz_width_EQ))
+          CmdArgs.push_back(Args.MakeArgString(
+              "--device-compiler=" + TC->getTripleString() +
+              "=-hipcpu-vecz-width=" + A->getValue()));
+        if (ToolChainArgs.hasArg(OPT_hipcpu_vecz_scalable))
+          CmdArgs.push_back(Args.MakeArgString(
+              "--device-compiler=" + TC->getTripleString() +
+              "=-hipcpu-vecz-scalable"));
+        if (ToolChainArgs.hasArg(OPT_hipcpu_vecz_vector_predication))
+          CmdArgs.push_back(Args.MakeArgString(
+              "--device-compiler=" + TC->getTripleString() +
+              "=-hipcpu-vecz-vector-predication"));
+        if (ToolChainArgs.hasArg(OPT_hipcpu_vecz_linearize_boscc))
+          CmdArgs.push_back(Args.MakeArgString(
+              "--device-compiler=" + TC->getTripleString() +
+              "=-hipcpu-vecz-linearize-boscc"));
         Args.ClaimAllArgs(options::OPT_hipcpu_device_link);
         for (Arg *A : ToolChainArgs.filtered(OPT_hipcpu_device_link))
           CmdArgs.push_back(Args.MakeArgString(

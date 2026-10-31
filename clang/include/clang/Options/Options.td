@@ -1559,6 +1559,24 @@ def hipcpu_device_link
     : Joined<["--"], "hipcpu-device-link=">, Flags<[HelpHidden]>,
       Visibility<[ClangOption]>, MetaVarName<"<arg>">,
       HelpText<"Extra flag passed to the spvcpu device image link.">;
+def hipcpu_vecz_width_EQ
+    : Joined<["-"], "hipcpu-vecz-width=">, Flags<[HelpHidden]>,
+      Visibility<[ClangOption]>, MetaVarName<"<n>">,
+      HelpText<"Vectorization width for the HIP CPU (spvcpu) vectorizer.">;
+def hipcpu_vecz_scalable
+    : Flag<["-"], "hipcpu-vecz-scalable">, Flags<[HelpHidden]>,
+      Visibility<[ClangOption]>,
+      HelpText<"Use scalable vectors (SVE/RVV) in the HIP CPU (spvcpu) "
+               "vectorizer.">;
+def hipcpu_vecz_vector_predication
+    : Flag<["-"], "hipcpu-vecz-vector-predication">, Flags<[HelpHidden]>,
+      Visibility<[ClangOption]>,
+      HelpText<"Enable vector predication in the HIP CPU (spvcpu) "
+               "vectorizer.">;
+def hipcpu_vecz_linearize_boscc
+    : Flag<["-"], "hipcpu-vecz-linearize-boscc">, Flags<[HelpHidden]>,
+      Visibility<[ClangOption]>,
+      HelpText<"Linearize BOSCC in the HIP CPU (spvcpu) vectorizer.">;
 defm gpu_allow_device_init : BoolFOption<"gpu-allow-device-init",
   LangOpts<"GPUAllowDeviceInit">, DefaultFalse,
   PosFlag<SetTrue, [], [ClangOption, CC1Option], "Allow">,
