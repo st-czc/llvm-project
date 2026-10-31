@@ -132,14 +132,17 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
   const char *LoweredFile = HIP::getTempFile(C, Stem + "-lowered", "bc");
   InputInfo Lowered(&JA, LoweredFile, Output.getBaseInput());
   {
-    ArgStringList OptArgs{UtilsFile,
-                          Args.MakeArgString("-mtriple=" + HostTriple),
-                          "-load-pass-plugin",
-                          Args.MakeArgString(HIPTC.getPassesPluginPath(
-                              "LLVMHIPOnSYCLNativeCPUPasses.so")),
-                          "-passes=hipcpu-normalize,default<O2>,sycl-native-cpu",
-                          "-o",
-                          LoweredFile};
+    ArgStringList OptArgs{
+        Args.MakeArgString("-mtriple=" + HostTriple),
+        "-load-pass-plugin",
+        Args.MakeArgString(
+            HIPTC.getPassesPluginPath("LLVMHIPOnSYCLNativeCPUPasses.so")),
+        "-vectorize-slp=false",
+        "-vectorize-loops=false",
+        "-passes=hipcpu-normalize,default<O2>,sycl-native-cpu",
+        UtilsFile,
+        "-o",
+        LoweredFile};
     if (!HostCPU.empty())
       OptArgs.push_back(Args.MakeArgString("-mcpu=" + HostCPU));
     C.addCommand(std::make_unique<Command>(JA, *this,
