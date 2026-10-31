@@ -169,6 +169,8 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
       LoweredFile,
       "-o",
       Output.getFilename()};
+  for (const Arg *A : Args.filtered(options::OPT_hipcpu_device_link))
+    ClangArgs.push_back(Args.MakeArgString(A->getValue()));
   if (!HostCPU.empty()) {
     // x86 selects the CPU through -march=, every other target through -mcpu=.
     const llvm::Triple HostTT(HostTriple);

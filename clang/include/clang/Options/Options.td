@@ -1555,6 +1555,10 @@ def hip_cpu_host_cpu_EQ
     : Joined<["--"], "hip-cpu-host-cpu=">, Flags<[HelpHidden]>,
       Visibility<[ClangOption]>, MetaVarName<"<cpu>">,
       HelpText<"Host CPU used to compile spvcpu device code.">;
+def hipcpu_device_link
+    : Joined<["--"], "hipcpu-device-link=">, Flags<[HelpHidden]>,
+      Visibility<[ClangOption]>, MetaVarName<"<arg>">,
+      HelpText<"Extra flag passed to the spvcpu device image link.">;
 defm gpu_allow_device_init : BoolFOption<"gpu-allow-device-init",
   LangOpts<"GPUAllowDeviceInit">, DefaultFalse,
   PosFlag<SetTrue, [], [ClangOption, CC1Option], "Allow">,

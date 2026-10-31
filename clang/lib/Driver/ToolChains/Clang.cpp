@@ -9899,6 +9899,11 @@ void LinkerWrapper::ConstructJob(Compilation &C, const JobAction &JA,
           CmdArgs.push_back(Args.MakeArgString(
               "--device-compiler=" + TC->getTripleString() +
               "=--hip-cpu-host-cpu=" + A->getValue()));
+        Args.ClaimAllArgs(options::OPT_hipcpu_device_link);
+        for (Arg *A : ToolChainArgs.filtered(OPT_hipcpu_device_link))
+          CmdArgs.push_back(Args.MakeArgString(
+              "--device-compiler=" + TC->getTripleString() +
+              "=--hipcpu-device-link=" + A->getValue()));
       }
 
       // Forward the LTO mode for this toolchain.
