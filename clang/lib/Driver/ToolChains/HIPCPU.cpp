@@ -137,7 +137,7 @@ void HIPCPU::Linker::constructLinkAndEmitDylibCommand(
                           "-load-pass-plugin",
                           Args.MakeArgString(HIPTC.getPassesPluginPath(
                               "LLVMHIPOnSYCLNativeCPUPasses.so")),
-                          "-passes=default<O2>,sycl-native-cpu",
+                          "-passes=hipcpu-normalize,default<O2>,sycl-native-cpu",
                           "-o",
                           LoweredFile};
     if (!HostCPU.empty())
