@@ -640,7 +640,8 @@ void CodeGenFunction::EmitKernelMetadata(const FunctionDecl *FD,
 
   if (!(getLangOpts().OpenCL ||
         (getLangOpts().CUDA &&
-         getContext().getTargetInfo().getTriple().isSPIRV())))
+         (getContext().getTargetInfo().getTriple().isSPIRV() ||
+          getContext().getTargetInfo().getTriple().isSPVCPU()))))
     return;
 
   if (const VecTypeHintAttr *A = FD->getAttr<VecTypeHintAttr>()) {

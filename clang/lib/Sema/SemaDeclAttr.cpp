@@ -8578,7 +8578,8 @@ void Sema::ProcessDeclAttributeList(
   // attribute must never appear as a group" for attributes like cold and hot.
   if (!(D->hasAttr<DeviceKernelAttr>() ||
         (D->hasAttr<CUDAGlobalAttr>() &&
-         Context.getTargetInfo().getTriple().isSPIRV()))) {
+         (Context.getTargetInfo().getTriple().isSPIRV() ||
+          Context.getTargetInfo().getTriple().isSPVCPU())))) {
     // These attributes cannot be applied to a non-kernel function.
     if (const auto *A = D->getAttr<ReqdWorkGroupSizeAttr>()) {
       // FIXME: This emits a different error message than
