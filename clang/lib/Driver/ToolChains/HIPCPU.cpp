@@ -235,6 +235,8 @@ void HIPCPUToolChain::addClangTargetOptions(
 
   HostTC->addClangTargetOptions(DriverArgs, CC1Args, BA, DeviceOffloadKind);
   CC1Args.push_back("-fcuda-is-device");
+  CC1Args.append({"-mllvm", "-vectorize-loops=false", "-mllvm",
+                  "-vectorize-slp=false"});
 
   if (!DriverArgs.hasArg(options::OPT_fvisibility_EQ,
                          options::OPT_fvisibility_ms_compat))
