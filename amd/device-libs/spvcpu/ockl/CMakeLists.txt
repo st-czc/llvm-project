@@ -5,9 +5,14 @@
 ## License. See LICENSE.TXT for details.
 ##===--------------------------------------------------------------------------
 
-file(GLOB sources
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cl
+set(sources
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/mul24.cl
 )
+
+file(GLOB src2_sources
+  ${CMAKE_CURRENT_SOURCE_DIR}/src2/*.cl
+)
+list(APPEND sources ${src2_sources})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/inc)
 
