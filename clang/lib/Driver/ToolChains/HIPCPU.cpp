@@ -267,6 +267,8 @@ void HIPCPUToolChain::addClangTargetOptions(
                   DriverArgs.MakeArgString(getDeviceLibPath(
                       UnsafeMathOpt ? "oclc_unsafe_math_on.bc"
                                     : "oclc_unsafe_math_off.bc"))});
+  CC1Args.append({"-mlink-builtin-bitcode",
+                  DriverArgs.MakeArgString(getDeviceLibPath("ockl.bc"))});
 }
 
 void HIPCPUToolChain::addClangWarningOptions(ArgStringList &CC1Args) const {
