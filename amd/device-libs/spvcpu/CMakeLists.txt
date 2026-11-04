@@ -12,3 +12,4 @@ include(OCL)
 
 add_subdirectory(oclc)
 add_subdirectory(ocml)
+add_subdirectory(ockl)
